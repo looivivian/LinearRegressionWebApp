@@ -491,3 +491,28 @@ label > .label-body {
   display: inline-block;
   margin-left: .5rem;
   font-weight: normal; }
+
+.menu-explore-data {
+    height: 112px;
+    width: 1212px;
+    display: flex;
+    justify-content: space-evenly;
+    padding-top: 24px;
+    margin: -80px auto 0 auto;
+    background-color: #FFFFFF;
+    box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
+}
+/* Menu explore data */
+#page-content div .menu-explore-data{
+    transform:translatex(0px) translatey(94px);
+   }
+   
+
+.menu-title-success{
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0.2px;
+    color: #1EAEDB;
+    margin-bottom: 8px;
+}

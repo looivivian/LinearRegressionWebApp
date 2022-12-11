@@ -60,27 +60,19 @@ layout = html.Div(
                         # Indicate what the x and y axis are
                         html.Div(children="Enter x-axis Title", className="menu-title"),
                         dcc.Input(id="x-axis", type="text", placeholder="default: x-axis", className="select"),
+                        html.Div(children="Enter y-axis Title", className="menu-title"),
+                        dcc.Input(id="y-axis", type="text", placeholder="default: y-axis"),
                         
                     ]
                 ),
                 html.Div(
                     children=[
-                        html.Div(children="Enter y-axis Title", className="menu-title"),
-                        dcc.Input(id="y-axis", type="text", placeholder="default: y-axis"),
+                        html.Div(children="Enter custom slope", className="menu-title"),
+                        dcc.Input(id="slope", type="text", placeholder="default: 1", className="select"),
+                        html.Div(children="Enter custom intercept", className="menu-title"),
+                        dcc.Input(id="intercept", type="text", placeholder="default: 0"),
                     ]
                 ),
-
-                # # Run button
-                # html.Div(
-                #     children=[
-                #         html.Button(
-                #             id="submit-button-state",
-                #             n_clicks=0,
-                #             children="Run Regression Analysis",
-                #             className="button",
-                #         ),
-                #     ]
-                # ),
                         
             ],
             className="menu-explore",
@@ -120,6 +112,57 @@ layout = html.Div(
             ],
             className="wrapper",
         ),
+
+        html.Div(
+            children=[
+                # Display the data from the graph
+                # such as the equation of the line
+                # and the correlation coefficient
+                html.Div(
+                    children=[
+                        html.Div(children="Equation of the line", className="menu-title"),
+                        html.Div(id="equation", className="warning"),
+                    ]
+                ),
+                # Pearson correlation coefficient
+                html.Div(
+                    children=[
+                        html.Div(children="Pearson correlation coefficient", className="menu-title"),
+                        html.Div(id="correlation", className="warning"),
+                        
+                    ]
+                ),
+                # pvalue
+                html.Div(
+                    children=[
+                        html.Div(children="P-value", className="menu-title"),
+                        html.Div(id="pvalue", className="warning"),
+                        
+                    ]
+                ),
+                # Standard error of the estimated slope
+                html.Div(
+                    children=[
+                        html.Div(children="Standard error of the estimated slope", className="menu-title"),
+                        html.Div(id="standard_error", className="warning"),
+                        
+                    ]
+                ),
+                # intercept_stderr
+                html.Div(
+                    children=[
+                        html.Div(children="Standard error of the estimated intercept", className="menu-title"),
+                        html.Div(id="intercept_stderr", className="warning"),
+                        
+                    ]
+                ),
+
+
+
+            ],
+            className="menu-explore-data",
+        ),
+        
         ]
 
 )
@@ -166,8 +209,10 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
     State('upload-data', 'filename'),
     State('upload-data', 'last_modified'),
     Input("x-axis", "value"),
-    Input("y-axis", "value"))
-def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis):
+    Input("y-axis", "value"),
+    Input("slope", "value"),
+    Input("intercept", "value"))
+def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis, slope, intercept):
     import plotly.graph_objs as go
     fig = go.Figure()
     fig.update_layout(
@@ -175,7 +220,7 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis)
             yaxis = { "visible": False },
             annotations = [
                 {   
-                    "text": "No matching data found. Please select a parameter or different date range.",
+                    "text": "No matching data found. Please upload a file or make sure the file is formatted correctly.",
                     "xref": "paper",
                     "yref": "paper",
                     "showarrow": False,
@@ -197,14 +242,27 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis)
         return fig
     else:
         df = children[0]
-        print(x_axis)
-        print(y_axis)
+        # Get the linear regression line
+        import scipy.stats as stats
+        slopeInput = slope
+        interceptInput = intercept
+        slope, intercept, r_value, p_value, std_err = stats.linregress(df[0], df[1])
+        # Plot a line with the input slope and intercept
         if x_axis is None:
             x_axis = "x-axis"
         if y_axis is None:
             y_axis = "y-axis"
+        if slopeInput is None:
+            slopeInput = 1
+        if interceptInput is None:
+            interceptInput = 0
+        slopeInput = float(slopeInput)
+        interceptInput = float(interceptInput)
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=df[0], y=df[1], mode='lines', name='lines'))
+        # Add scatter plot of data
+        fig.add_trace(go.Scatter(x=df[0], y=df[1], mode='markers', name='data'))
+        fig.add_trace(go.Scatter(x=df[0], y=slope*df[0]+intercept, mode='lines', name='regression line'))
+        fig.add_trace(go.Scatter(x=df[0], y=slopeInput*df[0]+interceptInput, mode='lines', name='input line', line=dict(color='red', dash='dash')))
         fig.update_layout(
             title={
                 "text": "Relationship between " + x_axis + " and " + y_axis,
@@ -216,3 +274,47 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis)
             colorway=["#17B897"],
         )
         return fig
+
+@callback(
+    [Output("equation", "children"),
+    Output("correlation", "children"),
+    Output("pvalue", "children"),
+    Output("standard_error", "children"),
+    Output("intercept_stderr", "children"),],
+    Input('upload-data', 'contents'),
+    State('upload-data', 'filename'),
+    State('upload-data', 'last_modified'))
+def update_equation(list_of_contents, list_of_names, list_of_dates):
+    children = []
+    if list_of_contents is not None:
+        children = [
+            parse_contents(c, n, d) for c, n, d in
+            zip(list_of_contents, list_of_names, list_of_dates)]
+    if len(children) == 0:
+        return "","","","",""
+    elif children[0].shape[1] != 2:
+        return "","","","",""
+    else:
+        df = children[0]
+        # Get the linear regression line
+        import scipy.stats as stats
+        result = stats.linregress(df[0], df[1])
+        slope = result[0]
+        intercept = result[1]
+        r_value = result[2]
+        p_value = result[3]
+        std_err = result[4]
+        intercept_err = 0
+        import numpy as np
+        intercept_stderr = std_err * np.sqrt(1/len(df[0]) + np.mean(df[0])**2/np.sum((df[0]-np.mean(df[0]))**2))
+        equation = "y = " + str(round(slope, 2)) + "x + " + str(round(intercept, 2))
+        correlation = "r = " + str(round(r_value, 2))
+        pvalue = "P-value = " + str(round(p_value, 2))
+        std_err = "Standard Error = " + str(round(std_err, 2))
+        intercept_err = "Intercept Error = " + str(round(intercept_stderr, 2))
+        print(equation)
+        return [html.Div(children=equation, className="menu-title-success"), 
+                html.Div(children=correlation, className="menu-title-success"),
+                html.Div(children=pvalue, className="menu-title-success"),
+                html.Div(children=std_err, className="menu-title-success"),
+                html.Div(children=intercept_err, className="menu-title-success")]
