@@ -13,6 +13,7 @@ FileNameEnum = {
     "fifa.csv": "FIFA 2022 World Cup Data",
     "housing.csv": "Boston Housing Data",
     "avocado.csv": "Avocado Prices Data",
+    "happiness.csv": "World Happiness Report 2019",
 }
 
 defaultOptions = []
