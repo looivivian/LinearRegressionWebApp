@@ -68,7 +68,7 @@ layout = html.Div(
                 html.Div(
                     children=[
                         html.Div(children="Enter custom slope", className="menu-title"),
-                        dcc.Input(id="slope", type="text", placeholder="default: 1", className="select"),
+                        dcc.Input(id="slope", type="text", placeholder="default: 1", className="select", ),
                         html.Div(children="Enter custom intercept", className="menu-title"),
                         dcc.Input(id="intercept", type="text", placeholder="default: 0"),
                     ]
@@ -112,12 +112,11 @@ layout = html.Div(
             ],
             className="wrapper",
         ),
-
         html.Div(
             children=[
                 # Display the data from the graph
                 # such as the equation of the line
-                # and the correlation coefficient
+                # and the correlation coefficien
                 html.Div(
                     children=[
                         html.Div(children="Equation of the line", className="menu-title"),
@@ -252,17 +251,19 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis,
             x_axis = "x-axis"
         if y_axis is None:
             y_axis = "y-axis"
-        if slopeInput is None:
+        if slopeInput is None or len(slopeInput) == 0:
             slopeInput = 1
-        if interceptInput is None:
+        if interceptInput is None or len(interceptInput) == 0:
             interceptInput = 0
+        
         slopeInput = float(slopeInput)
         interceptInput = float(interceptInput)
+        # Plot a line with the input slope and intercept
         fig = go.Figure()
         # Add scatter plot of data
         fig.add_trace(go.Scatter(x=df[0], y=df[1], mode='markers', name='data'))
         fig.add_trace(go.Scatter(x=df[0], y=slope*df[0]+intercept, mode='lines', name='regression line'))
-        fig.add_trace(go.Scatter(x=df[0], y=slopeInput*df[0]+interceptInput, mode='lines', name='input line', line=dict(color='red', dash='dash')))
+        fig.add_trace(go.Scatter(x=df[0], y=slopeInput*df[0]+interceptInput, mode='lines', name='input line', line = dict(color='firebrick', dash='dash')))
         fig.update_layout(
             title={
                 "text": "Relationship between " + x_axis + " and " + y_axis,
@@ -312,7 +313,6 @@ def update_equation(list_of_contents, list_of_names, list_of_dates):
         pvalue = "P-value = " + str(round(p_value, 2))
         std_err = "Standard Error = " + str(round(std_err, 2))
         intercept_err = "Intercept Error = " + str(round(intercept_stderr, 2))
-        print(equation)
         return [html.Div(children=equation, className="menu-title-success"), 
                 html.Div(children=correlation, className="menu-title-success"),
                 html.Div(children=pvalue, className="menu-title-success"),
