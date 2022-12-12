@@ -3,7 +3,7 @@ import dash_bootstrap_components as dbc
 from dash import dcc
 from dash import html
 import pandas as pd
-from pages import navbar, home, explore
+from pages import navbar, home, explore, relationships
 
 from dash.dependencies import Input, Output
 
@@ -39,8 +39,8 @@ app.layout = html.Div([
 def display_page(pathname):
     if pathname == '/explore':
         return explore.layout
-    # elif pathname == '/relationships':
-    #     return relationships.layout
+    elif pathname == '/relationships':
+        return relationships.layout
     # elif pathname == '/experiment':
     #     return experiment.layout
     else:
