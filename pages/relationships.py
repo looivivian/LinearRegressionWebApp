@@ -98,8 +98,7 @@ layout = html.Div(
                                     "x": 0,
                                     "y": 0,
                                     "type": "lines",
-                                    "hovertemplate": " %{y:.2f}"
-                                                     "<extra></extra>",
+                                    "hovertemplate": " Y = %{y:.2f} X + %{x:.2f}<extra></extra>",
                                 },
                             ],
                             "layout": {
@@ -115,6 +114,8 @@ layout = html.Div(
                                 "colorway": ["#17B897"],
                             },
                         },
+
+
                     ),
                     className="card",
                 ),

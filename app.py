@@ -1,68 +1,51 @@
-import base64
-import io
-
 import dash
-from dash.dependencies import Input, Output, State
-from dash import dcc, html, dash_table
-
+import dash_bootstrap_components as dbc
+from dash import dcc
+from dash import html
 import pandas as pd
+from pages import navbar, home, explore, relationships
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+from dash.dependencies import Input, Output
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.SANDSTONE,
+    {
+        "href": "https://fonts.googleapis.com/css2?"
+                "family=Lato:wght@400;700&display=swap",
+        "rel": "stylesheet",
+    }],
+    meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
+)
+
+server = app.server
+
+app.config.suppress_callback_exceptions = True
+
+app.title = "Artifical Intelligence Final Project"
+
+# df read json from data.json
 
 app.layout = html.Div([
-    dcc.Upload(
-        id='upload-data',
-        children=html.Div([
-            html.Button('Upload File')
-        ]),
-        # Allow multiple files to be uploaded
-        multiple=True
-    ),
-    html.Div(id='output-data-upload'),
-    html.Div(dcc.Markdown('''
-    You may upload a _.csv_ file containing data points. It should be formatted as follows:
-    * Each $row$ contain the independent ($x$) and dependent ($y$) variable of a data point
-    * The $1^{st} column$ contains the independent variable ($x$) of data points
-    * The $2^{nd} column$ contains the dependent variable ($y$) of data points
-    * The data set should be of size $n \\times 2$, where $n$ is the total number of data points''', mathjax=True)),
-])
+    dcc.Location(id='url', refresh=False),
+    navbar.layout,
+    html.Div(id='page-content', children=[]), 
+    ]
+)
 
-def parse_contents(contents, filename, date):
-    content_type, content_string = contents.split(',')
+# Create the callback to handle mutlipage inputs
+@app.callback(Output('page-content', 'children'),
+              [Input('url', 'pathname')])
+def display_page(pathname):
+    if pathname == '/explore':
+        return explore.layout
+    elif pathname == '/relationships':
+        return relationships.layout
+    # elif pathname == '/experiment':
+    #     return experiment.layout
+    else:
+        return home.layout
 
-    decoded = base64.b64decode(content_string)
-    try:
-        if 'csv' in filename:
-            # Assume that the user uploaded a CSV file
-            df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
-    except Exception as e:
-        print(e)
-        return html.Div([
-            'There was an error processing this file.'
-        ])
-
-    # returned value should be changed to a suitable data type as the input to the plotting function
-    return html.Div([
-        html.H6(filename),
-        dash_table.DataTable(
-            df.to_dict('records'),
-            [{'name': i, 'id': i} for i in df.columns]
-        ),
-    ])
-
-@app.callback(Output('output-data-upload', 'children'),
-              Input('upload-data', 'contents'),
-              State('upload-data', 'filename'),
-              State('upload-data', 'last_modified'))
-def update_output(list_of_contents, list_of_names, list_of_dates):
-    if list_of_contents is not None:
-        children = [
-            parse_contents(c, n, d) for c, n, d in
-            zip(list_of_contents, list_of_names, list_of_dates)]
-        return children
-
+# Run the app
 if __name__ == '__main__':
     app.run_server(debug=True)
