@@ -6,6 +6,10 @@ import datetime
 import plotly.express as px
 import base64
 import io
+from sklearn.metrics import mean_squared_error
+import scipy.stats as stats
+import numpy as np
+import plotly.graph_objs as go
 
 layout = html.Div(
     children=[
@@ -121,44 +125,51 @@ layout = html.Div(
                     children=[
                         html.Div(children="Equation of the line", className="menu-title"),
                         html.Div(id="equation", className="warning"),
-                    ]
+                    ], 
                 ),
                 # Pearson correlation coefficient
                 html.Div(
                     children=[
                         html.Div(children="Pearson correlation coefficient", className="menu-title"),
                         html.Div(id="correlation", className="warning"),
-                        
-                    ]
+                    ], 
                 ),
                 # pvalue
                 html.Div(
                     children=[
                         html.Div(children="P-value", className="menu-title"),
                         html.Div(id="pvalue", className="warning"),
-                        
-                    ]
+                    ], 
                 ),
                 # Standard error of the estimated slope
                 html.Div(
                     children=[
                         html.Div(children="Standard error of the estimated slope", className="menu-title"),
                         html.Div(id="standard_error", className="warning"),
-                        
-                    ]
+                    ], 
                 ),
                 # intercept_stderr
                 html.Div(
                     children=[
                         html.Div(children="Standard error of the estimated intercept", className="menu-title"),
-                        html.Div(id="intercept_stderr", className="warning"),
-                        
-                    ]
+                        html.Div(id="intercept_stderr", className="warning"),          
+                    ], 
                 ),
-
-
-
-            ],
+                # Estimate RMSE
+                html.Div(
+                    children=[
+                        html.Div(children="Root-mean-squared error for estimate", className="menu-title"),
+                        html.Div(id="estimate_rmse", className="warning"),
+                    ], 
+                ),
+               # Custom function RMSE
+                html.Div(
+                    children=[
+                        html.Div(children="Root-mean-squared error for input", className="menu-title"),
+                        html.Div(id="input_rmse", className="warning"),
+                    ], 
+                )
+            ], style={'height': '100%', 'display': 'flex', 'flex-wrap': 'wrap', 'justify-content': 'space-evenly'},
             className="menu-explore-data",
         ),
         
@@ -203,7 +214,8 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         
 
 @callback(
-    Output("explore-chart", "figure"),
+    [Output("explore-chart", "figure"),
+    Output('input_rmse', 'children')],
     Input('upload-data', 'contents'),
     State('upload-data', 'filename'),
     State('upload-data', 'last_modified'),
@@ -212,7 +224,6 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
     Input("slope", "value"),
     Input("intercept", "value"))
 def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis, slope, intercept):
-    import plotly.graph_objs as go
     fig = go.Figure()
     fig.update_layout(
             xaxis =  { "visible": False },
@@ -236,16 +247,16 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis,
             zip(list_of_contents, list_of_names, list_of_dates)]
     
     if len(children) == 0:
-        return fig
+        return [fig, html.Div(children=0, className="menu-title-success")]
     elif children[0].shape[1] != 2:
-        return fig
+        return [fig, html.Div(children=0, className="menu-title-success")]
     else:
         df = children[0]
         # Get the linear regression line
-        import scipy.stats as stats
         slopeInput = slope
         interceptInput = intercept
-        slope, intercept, r_value, p_value, std_err = stats.linregress(df[0], df[1])
+        slope, intercept, _, _, _ = stats.linregress(df[0], df[1])
+
         # Plot a line with the input slope and intercept
         if x_axis is None:
             x_axis = "x-axis"
@@ -255,9 +266,13 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis,
             slopeInput = 1
         if interceptInput is None or len(interceptInput) == 0:
             interceptInput = 0
-        
+
         slopeInput = float(slopeInput)
         interceptInput = float(interceptInput)
+
+        y_predicted_input = slopeInput * df[0] + interceptInput
+        rmse_input = mean_squared_error(df[1], y_predicted_input, squared=False)
+
         # Plot a line with the input slope and intercept
         fig = go.Figure()
         # Add scatter plot of data
@@ -274,14 +289,18 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis,
             yaxis_title=y_axis,
             colorway=["#17B897"],
         )
-        return fig
+        return [
+            fig,
+            html.Div(children=rmse_input, className="menu-title-success")
+        ]
 
 @callback(
     [Output("equation", "children"),
     Output("correlation", "children"),
     Output("pvalue", "children"),
     Output("standard_error", "children"),
-    Output("intercept_stderr", "children"),],
+    Output("intercept_stderr", "children"),
+    Output('estimate_rmse', 'children')],
     Input('upload-data', 'contents'),
     State('upload-data', 'filename'),
     State('upload-data', 'last_modified'))
@@ -292,21 +311,19 @@ def update_equation(list_of_contents, list_of_names, list_of_dates):
             parse_contents(c, n, d) for c, n, d in
             zip(list_of_contents, list_of_names, list_of_dates)]
     if len(children) == 0:
-        return "","","","",""
+        return ["" for _ in range(6)]
     elif children[0].shape[1] != 2:
-        return "","","","",""
+        return ["" for _ in range(6)]
     else:
         df = children[0]
         # Get the linear regression line
-        import scipy.stats as stats
         result = stats.linregress(df[0], df[1])
-        slope = result[0]
-        intercept = result[1]
-        r_value = result[2]
-        p_value = result[3]
-        std_err = result[4]
+        slope, intercept, r_value, p_value, std_err = result
         intercept_err = 0
-        import numpy as np
+
+        y_predicted_estimate = slope * df[0] + intercept
+        rmse = mean_squared_error(df[1], y_predicted_estimate, squared=False)
+
         intercept_stderr = std_err * np.sqrt(1/len(df[0]) + np.mean(df[0])**2/np.sum((df[0]-np.mean(df[0]))**2))
         equation = "y = " + str(round(slope, 2)) + "x + " + str(round(intercept, 2))
         correlation = "r = " + str(round(r_value, 2))
@@ -317,4 +334,6 @@ def update_equation(list_of_contents, list_of_names, list_of_dates):
                 html.Div(children=correlation, className="menu-title-success"),
                 html.Div(children=pvalue, className="menu-title-success"),
                 html.Div(children=std_err, className="menu-title-success"),
-                html.Div(children=intercept_err, className="menu-title-success")]
+                html.Div(children=intercept_err, className="menu-title-success"),
+                html.Div(children=rmse, className="menu-title-success")]
+    
