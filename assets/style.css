@@ -75,6 +75,10 @@ body {
     padding-top:13px;
    }
 
+#page-content div .menu-experiment{
+    padding-top:13px;
+   }
+
    
    /* Header */
 #page-content div .header{
@@ -132,6 +136,18 @@ body {
     background-color: #FFFFFF;
     box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
 }
+
+.menu-experiment {
+  height: 112px;
+  width: 1212px;
+  display: flex;
+  justify-content: space-evenly;
+  padding-top: 24px;
+  margin: -80px auto 0 auto;
+  background-color: #FFFFFF;
+  box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
+}
+
 
 .Select-control {
     width: 256px;
@@ -255,17 +271,6 @@ body {
     box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
 }
 
-.menu-experiment {
-    height: 112px;
-    width:324px;
-    display: flex;
-    justify-content: space-evenly;
-    padding-top: 12px;
-    margin: -80px auto 0 auto;
-    background-color: #FFFFFF;
-    box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
-}
-
 
 .Select-control-explore {
     width: 256px;
@@ -312,18 +317,6 @@ body {
 #input-filter .dropdown-multi .Select-control{
     width:231%;
    }
-   
-   /* Menu explore */
-   #page-content div .menu-experiment{
-
-    width:324px;
-   }
-
-   /* Division */
-#page-content div .menu-experiment > div{
-    width:300px;
-   }
-   
    
 
 /* Menu explore */
@@ -502,8 +495,20 @@ label > .label-body {
     background-color: #FFFFFF;
     box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
 }
+
+.menu-explore-data-experiment {
+  height: 112px;
+  width: 1212px;
+  display: flex;
+  justify-content: space-evenly;
+  padding-top: 24px;
+  margin: -80px auto 0 auto;
+  background-color: #FFFFFF;
+  box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
+}
+
 /* Menu explore data */
-#page-content div .menu-explore-data{
+#page-content div .menu-explore-data-experiment{
     transform:translatex(0px) translatey(94px);
    }
    
@@ -516,3 +521,36 @@ label > .label-body {
     color: #1EAEDB;
     margin-bottom: 8px;
 }
+
+
+/* Menu */
+#page-content div .menu-experiment{
+  transform:translatex(0px) translatey(-44px);
+ }
+ 
+ /* Menu explore data */
+ #page-content div .menu-explore-data-experiment{
+  transform:translatex(0px) translatey(22px);
+ }
+ 
+ /* Menu experiment */
+#page-content div .menu-experiment{
+  min-height:171px;
+  /* bring to front */
+  z-index: 1;
+  position:relative;
+ }
+
+ /* Menu experiment */
+#page-content div .menu-experiment{
+  transform:translatex(0px) translatey(-6px);
+ }
+ 
+ 
+ /* Menu explore data experiment */
+ #page-content div .menu-explore-data-experiment{
+  transform:translatex(0px) translatey(87px);
+ }
+ 
+ 
+ 
