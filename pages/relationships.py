@@ -4,6 +4,7 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 import datetime
 import plotly.express as px
+from sklearn.metrics import mean_squared_error
 
 # Open the datasets folder and read the csv files
 # The title of the csv file is the name of the dataset
@@ -166,7 +167,13 @@ layout = html.Div(
                     ]
                 ),
 
-
+                # Estimate RMSE
+                html.Div(
+                    children=[
+                        html.Div(children="Root-mean-squared error for estimate", className="menu-title"),
+                        html.Div(id="estimate_rmse-relation", className="warning"),
+                    ], 
+                )
 
             ],
             className="menu-explore-data",
@@ -298,7 +305,8 @@ def set_chart(input_value, output_value, output_value2):
     Output("correlation-relation", "children"),
     Output("pvalue-relation", "children"),
     Output("standard_error-relation", "children"),
-    Output("intercept_stderr-relation", "children"),],
+    Output("intercept_stderr-relation", "children"),
+    Output("estimate_rmse-relation", "children"),],
     [
         Input("input-filter", "value"),
         Input("output-filter", "value"),
@@ -358,10 +366,14 @@ def set_equation(input_value, output_value, output_value2):
     pvalue = "P-value = " + str(round(p_value, 2))
     std_err = "Standard Error = " + str(round(std_err, 2))
     intercept_err = "Intercept Error = " + str(round(intercept_stderr, 2))
+    y_predicted_estimate = slope * x_column + intercept
+    rmse = mean_squared_error(y_column, y_predicted_estimate, squared=False)
+
     return [html.Div(children=equation, className="menu-title-success"),
             html.Div(children=correlation, className="menu-title-success"),
             html.Div(children=pvalue, className="menu-title-success"),
             html.Div(children=std_err, className="menu-title-success"),
-            html.Div(children=intercept_err, className="menu-title-success")]
+            html.Div(children=intercept_err, className="menu-title-success"),
+            html.Div(children=rmse, className="menu-title-success")]
 
 
