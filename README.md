@@ -2,7 +2,7 @@
 
 This is a Linear Regression Application for EN.601.464/664
 
-This Application as multiple pages
+This Application has multiple pages
 
 ## Explore Your Own Dataset
 You may upload a .csv file containing data points. It should be formatted as follows:
