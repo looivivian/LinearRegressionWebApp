@@ -10,6 +10,7 @@ from sklearn.metrics import mean_squared_error
 import scipy.stats as stats
 import numpy as np
 import plotly.graph_objs as go
+import json
 
 layout = html.Div(
     children=[
@@ -86,7 +87,7 @@ layout = html.Div(
                 html.Div(
                     children=dcc.Graph(
                         id="explore-chart",
-                        config={"displayModeBar": False},
+                        config={"displayModeBar": True},
                         figure={
                             "data": [
                                 {
@@ -115,6 +116,13 @@ layout = html.Div(
                 ),
             ],
             className="wrapper",
+        ),
+        html.Div(
+            children=[
+                html.Pre(id='relayout-data', children=""),
+                dcc.Store(id='plot-data'),
+                dcc.Store(id='file-name')
+            ]
         ),
         html.Div(
             children=[
@@ -184,11 +192,13 @@ def parse_contents(contents, filename, date):
     df = pd.DataFrame()
     x_axis = ""
     y_axis = ""
+    print(filename)
     try:
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
             # Check if first row is a header
             df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), header=None)
+            print(df, flush=True)
     except Exception as e:
         pass
     return df
@@ -202,28 +212,93 @@ def parse_contents(contents, filename, date):
 def update_output(list_of_contents, list_of_names, list_of_dates):
     children = []
     if list_of_contents is not None:
+        print("Calling parse_contents over children", flush=True)
         children = [
             parse_contents(c, n, d) for c, n, d in
             zip(list_of_contents, list_of_names, list_of_dates)]
     if len(children) == 0:
         return html.Div(children="No file has been uploaded yet", className="menu-title-warning")
     elif children[0].shape[1] != 2:
+        print("Bruh", flush=True)
         return html.Div(children="Invalid file format. Please upload a .csv file", className="menu-title-warning")
     else:
         return html.Div(children="File uploaded successfully", className="menu-title-success")
+
+@callback(
+    Output("relayout-data", "children"),
+    Output("plot-data", "data"),
+    Output("file-name", "data"),
+    Input('upload-data', 'contents'),
+    State('upload-data', 'filename'),
+    State('upload-data', 'last_modified'),
+    State("plot-data", "data"),
+    State("file-name", "data"),
+    Input("explore-chart", "relayoutData"),
+)
+def read_file(list_of_contents, list_of_names, list_of_dates, last_plot_data, last_file_name, relayoutData):
+    relayoutText = json.dumps(relayoutData, indent=2)
+
+    if list_of_names and list_of_names[0] == last_file_name:
+        df = last_plot_data
+    else:
+        children = []
+        if list_of_contents is not None:
+            children = [
+                parse_contents(c, n, d) for c, n, d in
+                zip(list_of_contents, list_of_names, list_of_dates)]
+        
+        if len(children) == 0:
+            print("No children")
+            return [relayoutText, None, last_file_name]
+        elif children[0].shape[1] != 2:
+            print("Shape wrong")
+            return [relayoutText, None, last_file_name]
+        else:
+            # relayoutData.shapes
+            df = children[0]
+            last_file_name = list_of_names[0]
+
+    if "shapes" in relayoutData:
+        print("Drew line")
+        line = relayoutData["shapes"][0]
+        return [relayoutText, [list(df[0]) + [line["x0"]], list(df[1]) + [line["y0"]]], last_file_name]
+    else:
+        print("Oops")
+        return [relayoutText, [df[0], df[1]], last_file_name]
+
+'''
+  "shapes": [
+    {
+      "editable": true,
+      "xref": "x",
+      "yref": "y",
+      "layer": "above",
+      "opacity": 1,
+      "line": {
+        "color": "#444",
+        "width": 4,
+        "dash": "solid"
+      },
+      "type": "line",
+      "x0": 2.1621438587844732,
+      "y0": 12.157982492705294,
+      "x1": 2.478217886648894,
+      "y1": 10.75739891621509
+    }
+  ]
+}
+'''
         
 
 @callback(
     [Output("explore-chart", "figure"),
     Output('input_rmse', 'children')],
-    Input('upload-data', 'contents'),
-    State('upload-data', 'filename'),
-    State('upload-data', 'last_modified'),
+    Input("plot-data", "data"),
     Input("x-axis", "value"),
     Input("y-axis", "value"),
     Input("slope", "value"),
     Input("intercept", "value"))
-def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis, slope, intercept):
+def update_chart(df, x_axis, y_axis, slope, intercept):
     fig = go.Figure()
     fig.update_layout(
             xaxis =  { "visible": False },
@@ -240,18 +315,13 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis,
                 }
             ]
         )
-    children = []
-    if list_of_contents is not None:
-        children = [
-            parse_contents(c, n, d) for c, n, d in
-            zip(list_of_contents, list_of_names, list_of_dates)]
-    
-    if len(children) == 0:
-        return [fig, html.Div(children=0, className="menu-title-success")]
-    elif children[0].shape[1] != 2:
+    if df is None:
         return [fig, html.Div(children=0, className="menu-title-success")]
     else:
-        df = children[0]
+        print("test")
+        print(df)
+        df = pd.concat([pd.Series(df[0]), pd.Series(df[1])], axis=1)
+        print(df)
         # Get the linear regression line
         slopeInput = slope
         interceptInput = intercept
@@ -279,6 +349,17 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis,
         fig.add_trace(go.Scatter(x=df[0], y=df[1], mode='markers', name='data'))
         fig.add_trace(go.Scatter(x=df[0], y=slope*df[0]+intercept, mode='lines', name='regression line'))
         fig.add_trace(go.Scatter(x=df[0], y=slopeInput*df[0]+interceptInput, mode='lines', name='input line', line = dict(color='firebrick', dash='dash')))
+        # fig.add_vrect(
+        #     x0=-100, x1=100,
+        #     fillcolor="LightSalmon", opacity=0,
+        #     layer="below", line_width=0,
+        # )
+        # fig.add_shape(type="rect",
+        #     xref="paper", yref="paper",
+        #     x0=0, x1=1, y0=0, y1=1,
+        #     line_width=0
+        # )
+        fig.layout.shapes
         fig.update_layout(
             title={
                 "text": "Relationship between " + x_axis + " and " + y_axis,
@@ -288,11 +369,25 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis,
             xaxis_title=x_axis,
             yaxis_title=y_axis,
             colorway=["#17B897"],
+            dragmode='drawline'
         )
         return [
             fig,
             html.Div(children=rmse_input, className="menu-title-success")
         ]
+    
+# @callback(
+#     Output("relayout-data", "children"),
+#     Output("plot-data", "data"),
+#     State("plot-data", "data"),
+#     Input("explore-chart", "relayoutData"),
+# )
+# def what(df, relayoutData):
+#     print("Hi")
+#     return [
+#         json.dumps(relayoutData, indent=2),
+#         df
+#     ]
 
 @callback(
     [Output("equation", "children"),
