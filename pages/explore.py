@@ -203,8 +203,6 @@ def parse_contents(contents, filename, date):
         pass
     return df
     
-
-
 @callback(Output('warning', 'children'),
             Input('upload-data', 'contents'),
             State('upload-data', 'filename'),
@@ -225,7 +223,6 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         return html.Div(children="File uploaded successfully", className="menu-title-success")
 
 @callback(
-    Output("relayout-data", "children"),
     Output("plot-data", "data"),
     Output("file-name", "data"),
     Input('upload-data', 'contents'),
@@ -236,8 +233,6 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
     Input("explore-chart", "relayoutData"),
 )
 def read_file(list_of_contents, list_of_names, list_of_dates, last_plot_data, last_file_name, relayoutData):
-    relayoutText = json.dumps(relayoutData, indent=2)
-
     if list_of_names and list_of_names[0] == last_file_name:
         df = last_plot_data
     else:
@@ -249,10 +244,10 @@ def read_file(list_of_contents, list_of_names, list_of_dates, last_plot_data, la
         
         if len(children) == 0:
             print("No children")
-            return [relayoutText, None, last_file_name]
+            return [None, last_file_name]
         elif children[0].shape[1] != 2:
             print("Shape wrong")
-            return [relayoutText, None, last_file_name]
+            return [None, last_file_name]
         else:
             # relayoutData.shapes
             df = children[0]
@@ -261,34 +256,10 @@ def read_file(list_of_contents, list_of_names, list_of_dates, last_plot_data, la
     if "shapes" in relayoutData:
         print("Drew line")
         line = relayoutData["shapes"][0]
-        return [relayoutText, [list(df[0]) + [line["x0"]], list(df[1]) + [line["y0"]]], last_file_name]
+        return [[list(df[0]) + [line["x0"]], list(df[1]) + [line["y0"]]], last_file_name]
     else:
         print("Oops")
-        return [relayoutText, [df[0], df[1]], last_file_name]
-
-'''
-  "shapes": [
-    {
-      "editable": true,
-      "xref": "x",
-      "yref": "y",
-      "layer": "above",
-      "opacity": 1,
-      "line": {
-        "color": "#444",
-        "width": 4,
-        "dash": "solid"
-      },
-      "type": "line",
-      "x0": 2.1621438587844732,
-      "y0": 12.157982492705294,
-      "x1": 2.478217886648894,
-      "y1": 10.75739891621509
-    }
-  ]
-}
-'''
-        
+        return [[df[0], df[1]], last_file_name]
 
 @callback(
     [Output("explore-chart", "figure"),
@@ -375,19 +346,6 @@ def update_chart(df, x_axis, y_axis, slope, intercept):
             fig,
             html.Div(children=rmse_input, className="menu-title-success")
         ]
-    
-# @callback(
-#     Output("relayout-data", "children"),
-#     Output("plot-data", "data"),
-#     State("plot-data", "data"),
-#     Input("explore-chart", "relayoutData"),
-# )
-# def what(df, relayoutData):
-#     print("Hi")
-#     return [
-#         json.dumps(relayoutData, indent=2),
-#         df
-#     ]
 
 @callback(
     [Output("equation", "children"),

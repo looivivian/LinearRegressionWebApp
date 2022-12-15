@@ -2,9 +2,17 @@
 
 This is a Linear Regression Application for EN.601.464/664
 
-Current Deployment: https://ai-final-project-fall-22.onrender.com
+Current Deployment: https://ai-final-project.onrender.com/
 
 This Application has multiple pages
+
+## Running locally
+
+### Prequisites
+- Python 3 (Python 3.9.12 tested and working, but other versions will also likely work)
+- pip
+
+First, clone the repo to your local machine. From the shell run `pip install -r requirements.txt` (this only needs to be done once). Then run `python app.py`. The application can be accessed by navigating to the localhost URL displayed in the shell output.
 
 ## Explore Your Own Dataset
 
