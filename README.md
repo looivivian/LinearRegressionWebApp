@@ -2,7 +2,7 @@
 
 This is a Linear Regression Application for EN.601.464/664
 
-Current Deployment: ai-final-project.onrender.com
+Current Deployment: https://ai-final-project.onrender.com/
 
 This Application has multiple pages
 
