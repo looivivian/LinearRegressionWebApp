@@ -164,6 +164,13 @@ layout = html.Div(
         ]
 )
 
+"""
+ Parse the contents of a file and return a dataframe.
+ 
+ @param contents - The contents of the file.
+ @param filename - The filename of the file to parse
+ @param date - The date of the file to parse
+"""
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
 
@@ -182,6 +189,13 @@ def parse_contents(contents, filename, date):
     
 
 
+"""
+ Callback function to update the output of the file and store state of the file contents.
+ 
+ @param list_of_contents - list of contents of the file
+ @param list_of_names - list of names of files to be uploaded
+ @param list_of_dates - list of dates of files.
+"""
 @callback(Output('warning-gd', 'children'),
             Input('upload-data-gd', 'contents'),
             State('upload-data-gd', 'filename'),
@@ -199,6 +213,19 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
     else:
         return html.Div(children="File uploaded successfully", className="menu-title-success")
         
+"""
+ This function is called when the chart is updated.
+ 
+ @param list_of_contents - list of contents of the chart.
+ @param list_of_names - list of contents of the chart.
+ @param list_of_dates - list of contents of the chart.
+ @param x_axis - The x axis of the chart.
+ @param y_axis - The y axis of the chart.
+ @param learning_rate - learning rate of the learning rate of the chart.
+ @param num_epochs - learning rate of the chart.
+ @param init_w - initial weight and bias values
+ @param init_b - initial weight weight and bias
+"""
 @callback(
     [Output("explore-chart-gd", "figure"),
     Output('cost', 'children'),
@@ -356,6 +383,21 @@ def compute_gradient(x, y, w, b):
     return dj_dw, dj_db
 
 def run_gradient_descent(x_train, y_train, w_initial, b_initial, alpha, num_iters):
+    """
+    Runs gradient descent to learn the parameters of a linear model
+    Args:
+        x_train (ndarray (m,)): input values, m examples
+        y_train (ndarray (m,)): output values, m examples (the correct answers)
+        w_initial (scalar): initial value of the parameter w
+        b_initial (scalar): initial value of the parameter b
+        alpha (scalar): learning rate
+        num_iters (int): number of iterations to run gradient descent
+    Returns:
+        w (scalar): the learned value of the parameter w
+        b (scalar): the learned value of the parameter b
+        J_history (ndarray (num_iters,)): the cost at each iteration
+        p_history (ndarray (num_iters, 2)): the parameters at each iteration
+    """
     w = w_initial
     b = b_initial
     
