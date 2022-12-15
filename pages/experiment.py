@@ -154,13 +154,51 @@ layout = html.Div(
                 # pvalue
                 html.Div(
                     children=[
-                        html.Div(children="Cost", className="menu-title"),
+                        html.Div(children="Final Cost", className="menu-title"),
                         html.Div(id="cost", className="warning"),
                     ], 
                 ),
             ], style={'height': '100%', 'display': 'flex', 'flex-wrap': 'wrap', 'justify-content': 'space-evenly'},
             className="menu-explore-data",
         ),
+        html.Br(),
+        html.Br(),
+        html.Br(),
+        html.Div(
+            children=[
+                html.Div(
+                    children=dcc.Graph(
+                        id="cost-chart-gd",
+                        config={"displayModeBar": False},
+                        figure={
+                            "data": [
+                                {
+                                    "x": 0,
+                                    "y": 0,
+                                    "type": "lines",
+                                    "hovertemplate": " %{y:.2f}"
+                                                     "<extra></extra>",
+                                },
+                            ],
+                            "layout": {
+                                "title": {
+                                    "text": "Cost over epochs",
+                                    "x": 0.1,
+                                    "xanchor": "left",
+                                },
+                                "xaxis": {"fixedrange": True},
+                                "yaxis": {
+                                    "fixedrange": True,
+                                },
+                                "colorway": ["#17B897"],
+                            },
+                        },
+                    ),
+                    className="card",
+                ),
+            ],
+            className="wrapper",
+        )
         ]
 )
 
@@ -201,6 +239,7 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
         
 @callback(
     [Output("explore-chart-gd", "figure"),
+    Output("cost-chart-gd", "figure"),
     Output('cost', 'children'),
     Output('weight', 'children'),
     Output('bias', 'children')],
@@ -239,12 +278,14 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis,
     if len(children) == 0:
         return [
             fig,
+            go.Figure(),
             html.Div(children=0, className="menu-title-success"), 
             html.Div(children=0, className="menu-title-success"), 
             html.Div(children=0, className="menu-title-success")]
     elif children[0].shape[1] != 2:
         return [
             fig, 
+            go.Figure(),
             html.Div(children=0, className="menu-title-success"),
             html.Div(children=0, className="menu-title-success"),
             html.Div(children=0, className="menu-title-success")]
@@ -291,8 +332,28 @@ def update_chart(list_of_contents, list_of_names, list_of_dates, x_axis, y_axis,
             yaxis_title=y_axis,
             colorway=["#17B897"],
         )
+
+        cost_fig = go.Figure()
+        cost_fig.add_trace(go.Scatter(x0=1, y=J_history, mode='lines', name='Cost'))
+        cost_fig.update_layout(
+            title= {
+                "text": "Cost over epochs",
+                "x": 0.1,
+                "xanchor": "left",
+            },
+            xaxis= {"fixedrange": True},
+            yaxis= {
+                "fixedrange": True,
+            },
+            xaxis_title="Epochs",
+            yaxis_title="Cost",
+            colorway= ["#17B897"],
+        )
+
+
         return [
             fig,
+            cost_fig,
             html.Div(children=J_history[-1], className="menu-title-success"),
             html.Div(children=w, className="menu-title-success"),
             html.Div(children=b, className="menu-title-success")
